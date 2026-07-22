@@ -753,16 +753,10 @@
     font-weight: 800;
 }
 
-.sector-c strong {
-    color: #007bff;
-}
-
-.sector-p strong {
-    color: #28a745;
-}
-
+.sector-c strong,
+.sector-p strong,
 .sector-s strong {
-    color: #ffc107;
+    color: #212529 !important;
 }
 /* ===== Grouped Add Form UI ===== */
 .grouped-form {
@@ -880,15 +874,15 @@
         <div class="sector-counter-box" style="margin-top: 10px; margin-bottom: 5px; gap: 6px;">
             <div class="sector-item sector-c" style="min-width: 55px; padding: 4px 6px;">
                 <span style="font-size: 10px; font-weight: 700;">Central</span>
-                <strong id="receivedSectorCCount" style="font-size: 14px; color: #007bff;">0</strong>
+                <strong id="receivedSectorCCount" style="font-size: 14px; color: #212529;">0</strong>
             </div>
             <div class="sector-item sector-p" style="min-width: 55px; padding: 4px 6px;">
                 <span style="font-size: 10px; font-weight: 700;">Private</span>
-                <strong id="receivedSectorPCount" style="font-size: 14px; color: #28a745;">0</strong>
+                <strong id="receivedSectorPCount" style="font-size: 14px; color: #212529;">0</strong>
             </div>
             <div class="sector-item sector-s" style="min-width: 55px; padding: 4px 6px;">
                 <span style="font-size: 10px; font-weight: 700;">State</span>
-                <strong id="receivedSectorSCount" style="font-size: 14px; color: #ffc107;">0</strong>
+                <strong id="receivedSectorSCount" style="font-size: 14px; color: #212529;">0</strong>
             </div>
         </div>
         
@@ -910,7 +904,7 @@
 
         <div style="text-align:center;">
             <div style="font-size:28px;">📧</div>
-            <div style="font-size:13px; color:#6c757d; font-weight:600;">Soft Copy</div>
+            <div style="font-size:13px; color:#6c757d; font-weight:600;">Only Soft Copy</div>
             <div id="softCopyCount" style="font-size:30px; font-weight:800; color:#28a745;">0</div>
         </div>
 
@@ -1283,66 +1277,158 @@ function normalizeComplianceValue(value) {
 }
 
         function generateStateMultiOptions() {
-            const optionsDiv = document.getElementById('stateFilterOptions');
-            optionsDiv.innerHTML = '';
-            const stateColumnKey = getSafeHeaderKey(['state']);
-            if (!stateColumnKey) {
-                document.getElementById('stateFilterContainer').style.display = 'none';
-                return;
-            }
-            document.getElementById('stateFilterContainer').style.display = 'block';
-            uniqueStateSuggestions.forEach(state => {
-                const div = document.createElement('div');
-                div.className = 'multiselect-option';
-                div.innerHTML = `
-                    <input type="checkbox" id="state_opt_${state}" value="${state}" onchange="handleStateSelection()" />
-                    <label for="state_opt_${state}">${state}</label>
-                `;
-                optionsDiv.appendChild(div);
-            });
-            document.querySelector('#stateFilterContainer .multiselect-select').textContent = "🔍 States (All)";
-        }
+    const optionsDiv = document.getElementById('stateFilterOptions');
+    optionsDiv.innerHTML = '';
+    const stateColumnKey = getSafeHeaderKey(['state']);
+    
+    if (!stateColumnKey) {
+        document.getElementById('stateFilterContainer').style.display = 'none';
+        return;
+    }
+    document.getElementById('stateFilterContainer').style.display = 'block';
 
+    // 1. Sabse pehle "Select All" checkbox add karein
+    const selectAllDiv = document.createElement('div');
+    selectAllDiv.className = 'multiselect-option';
+    selectAllDiv.style.borderBottom = '1px solid #dee2e6';
+    selectAllDiv.style.paddingBottom = '6px';
+    selectAllDiv.style.marginBottom = '4px';
+    selectAllDiv.innerHTML = `
+        <input type="checkbox" id="state_opt_select_all" onchange="toggleSelectAllStates(this)" />
+        <label for="state_opt_select_all" style="font-weight: bold; cursor: pointer;">Select All</label>
+    `;
+    optionsDiv.appendChild(selectAllDiv);
+
+    // 2. Baaki saare individual States add karein
+    uniqueStateSuggestions.forEach(state => {
+        const div = document.createElement('div');
+        div.className = 'multiselect-option';
+        div.innerHTML = `
+            <input type="checkbox" id="state_opt_${state}" value="${state}" onchange="handleStateSelection()" />
+            <label for="state_opt_${state}">${state}</label>
+        `;
+        optionsDiv.appendChild(div);
+    });
+
+    document.querySelector('#stateFilterContainer .multiselect-select').textContent = " States (All) 🔍";
+}
+
+// Support Function: Jo Select All par click karne par saare checkboxes ko control karega
+function toggleSelectAllStates(selectAllCb) {
+    const isChecked = selectAllCb.checked;
+    // 'Select All' ko chhodkar baki saare checkboxes select karein
+    const checkboxes = document.querySelectorAll('#stateFilterOptions input[type="checkbox"]:not(#state_opt_select_all)');
+    checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+    });
+    handleStateSelection();
+}
         function generateComplianceMultiOptions() {
-            const optionsDiv = document.getElementById('complianceFilterOptions');
-            optionsDiv.innerHTML = '';
-            const complianceColumnKey = getSafeHeaderKey(['compliance type']);
-            if (!complianceColumnKey) {
-                document.getElementById('complianceFilterContainer').style.display = 'none';
-                return;
-            }
-            document.getElementById('complianceFilterContainer').style.display = 'block';
-            uniqueComplianceSuggestions.forEach(type => {
-                const div = document.createElement('div');
-                div.className = 'multiselect-option';
-                div.innerHTML = `
-                    <input type="checkbox" id="comp_opt_${type}" value="${type}" onchange="handleComplianceSelection()" />
-                    <label for="comp_opt_${type}">${type}</label>
-                `;
-                optionsDiv.appendChild(div);
-            });
-            document.querySelector('#complianceFilterContainer .multiselect-select').textContent = "💼 Compliance (All)";
-        }
+    const optionsDiv = document.getElementById('complianceFilterOptions');
+    optionsDiv.innerHTML = '';
+    const complianceColumnKey = getSafeHeaderKey(['compliance type']);
+    
+    if (!complianceColumnKey) {
+        document.getElementById('complianceFilterContainer').style.display = 'none';
+        return;
+    }
+    document.getElementById('complianceFilterContainer').style.display = 'block';
 
+    // 1. Sabse pehle "Select All" checkbox add karein
+    const selectAllDiv = document.createElement('div');
+    selectAllDiv.className = 'multiselect-option';
+    selectAllDiv.style.borderBottom = '1px solid #dee2e6';
+    selectAllDiv.style.paddingBottom = '6px';
+    selectAllDiv.style.marginBottom = '4px';
+    selectAllDiv.innerHTML = `
+        <input type="checkbox" id="comp_opt_select_all" onchange="toggleSelectAllCompliance(this)" />
+        <label for="comp_opt_select_all" style="font-weight: bold; cursor: pointer;">Select All</label>
+    `;
+    optionsDiv.appendChild(selectAllDiv);
+
+    // 2. Baaki saare individual Compliance Options add karein
+    uniqueComplianceSuggestions.forEach(type => {
+        const div = document.createElement('div');
+        div.className = 'multiselect-option';
+        div.innerHTML = `
+            <input type="checkbox" id="comp_opt_${type}" value="${type}" onchange="handleComplianceSelection()" />
+            <label for="comp_opt_${type}">${type}</label>
+        `;
+        optionsDiv.appendChild(div);
+    });
+
+    document.querySelector('#complianceFilterContainer .multiselect-select').textContent = " Compliance (All) 💼";
+}
+
+// Support Function: Jo Select All par click karne par saare checkboxes ko control karega
+function toggleSelectAllCompliance(selectAllCb) {
+    const isChecked = selectAllCb.checked;
+    // 'Select All' ko chhodkar baki saare checkboxes select karein
+    const checkboxes = document.querySelectorAll('#complianceFilterOptions input[type="checkbox"]:not(#comp_opt_select_all)');
+    checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+    });
+    handleComplianceSelection();
+}
         function handleStateSelection() {
-            selectedStates = [];
-            document.querySelectorAll('#stateFilterOptions input[type="checkbox"]:checked').forEach(cb => {
-                selectedStates.push(cb.value);
-            });
-            const titleBtn = document.querySelector('#stateFilterContainer .multiselect-select');
-            titleBtn.textContent = selectedStates.length === 0 ? "🔍 States (All)" : `🔍 States (${selectedStates.length})`;
-            filterData();
+    selectedStates = [];
+    // Saare individual checkboxes (Select All ko chhodkar)
+    const checkboxes = document.querySelectorAll('#stateFilterOptions input[type="checkbox"]:not(#state_opt_select_all)');
+    const checkedCount = document.querySelectorAll('#stateFilterOptions input[type="checkbox"]:not(#state_opt_select_all):checked').length;
+    const selectAllCb = document.getElementById('state_opt_select_all');
+
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            selectedStates.push(cb.value);
         }
+    });
+
+    // Agar saare checked hain, toh 'Select All' ko bhi checked show karein, varna unchecked
+    if (selectAllCb) {
+        selectAllCb.checked = (checkedCount === checkboxes.length && checkboxes.length > 0);
+    }
+
+    const titleBtn = document.querySelector('#stateFilterContainer .multiselect-select');
+    
+    // Agar sabhi checked hain ya koi bhi checked nahi hai toh "States (All)" dikhayein
+    if (selectedStates.length === 0 || selectedStates.length === checkboxes.length) {
+        titleBtn.textContent = " States (All) 🔍";
+    } else {
+        titleBtn.textContent = ` States (${selectedStates.length}) 🔍`;
+    }
+
+    filterData();
+}
 
         function handleComplianceSelection() {
-            selectedCompliance = [];
-            document.querySelectorAll('#complianceFilterOptions input[type="checkbox"]:checked').forEach(cb => {
-                selectedCompliance.push(cb.value);
-            });
-            const titleBtn = document.querySelector('#complianceFilterContainer .multiselect-select');
-            titleBtn.textContent = selectedCompliance.length === 0 ? "💼 Compliance (All)" : `💼 Compliance (${selectedCompliance.length})`;
-            filterData();
+    selectedCompliance = [];
+    // Saare individual checkboxes (Select All ko chhodkar)
+    const checkboxes = document.querySelectorAll('#complianceFilterOptions input[type="checkbox"]:not(#comp_opt_select_all)');
+    const checkedCount = document.querySelectorAll('#complianceFilterOptions input[type="checkbox"]:not(#comp_opt_select_all):checked').length;
+    const selectAllCb = document.getElementById('comp_opt_select_all');
+
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            selectedCompliance.push(cb.value);
         }
+    });
+
+    // Agar saare checked hain, toh 'Select All' ko bhi checked show karein, varna unchecked
+    if (selectAllCb) {
+        selectAllCb.checked = (checkedCount === checkboxes.length && checkboxes.length > 0);
+    }
+
+    const titleBtn = document.querySelector('#complianceFilterContainer .multiselect-select');
+    
+    // Agar sabhi checked hain ya koi bhi checked nahi hai toh "Compliance (All)" dikhayein
+    if (selectedCompliance.length === 0 || selectedCompliance.length === checkboxes.length) {
+        titleBtn.textContent = " Compliance (All) 💼";
+    } else {
+        titleBtn.textContent = ` Compliance (${selectedCompliance.length}) 💼`;
+    }
+
+    filterData();
+}
 function getAuthStatusColumnKey() {
     // Exact match first
     let key = headers.find(h =>
@@ -2023,7 +2109,27 @@ function applyTitleCaseToEditFields() {
             filteredData.forEach((row, index) => {
                 const rowIndex = parseInt(row._rowIndex);
                 const isEditing = editingRow === rowIndex;
-                html += `<tr><td style="color:#6c757d; font-weight:bold;">${index + 1}</td>`;
+                // Row background color based on Authorization Status
+let rowStyle = "";
+
+const authColumnKey = getAuthStatusColumnKey();
+
+if (authColumnKey) {
+    const status = String(row[authColumnKey] || "").trim().toLowerCase();
+
+    const isReceived =
+        (status.includes("hard copy") ||
+         status.includes("soft copy") ||
+         status.includes("received")) &&
+        !status.includes("not");
+
+    if (isReceived) {
+        rowStyle = "background:#e8f5e9;";   // Light Green
+    } else {
+        rowStyle = "background:#fffde7;";   // Light Yellow
+    }
+}
+                html += `<tr style="${rowStyle}"><td style="color:#6c757d; font-weight:bold;">${index + 1}</td>`;
                 headers.forEach((h, colIndex) => {
     let cellValue = (row._rowValues && row._rowValues[colIndex] !== undefined)
     ? row._rowValues[colIndex]
