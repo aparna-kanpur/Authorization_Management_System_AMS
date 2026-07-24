@@ -102,18 +102,30 @@
 </head>
 <body>
     <div class="login-container">
-        <div class="login-header">
-            <h1>📊 Authorization Management System(AMS)-BOATNR</h1>
-            <p>Please login to continue</p>
-        </div>
+       <div class="login-header">
+
+    <img src="boat-logo.png"
+         style="height:90px; margin-bottom:15px;">
+
+    <h1>Authorization Management System (AMS)-BOATNR</h1>
+
+    <p style="font-size:15px; font-weight:700; color:#212529;">
+    Please Login to continue
+</p>
+
+</div>
 
         <form id="loginForm" autocomplete="off">
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="username" style="font-size:15px; font-weight:700; color:#212529;">
+    Username
+</label>
                 <input type="text" id="username" name="username" placeholder="Enter username" autocomplete="off" required>
             </div>
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password" style="font-size:15px; font-weight:700; color:#212529;">
+    Password
+</label>
                 <input type="password" id="password" name="password" placeholder="Enter password" autocomplete="new-password" required>
             </div>
             <button type="submit" class="login-btn">Login</button>
@@ -131,9 +143,121 @@
             const errorElement = document.getElementById('errorMessage');
 
             const validUsers = [
-                { username: 'admin', password: 'admin123', role: 'admin', name: 'Admin User' },
-                { username: 'view', password: 'view123', role: 'view', name: 'Viewer' }
-            ];
+    {
+        username: 'admin',
+        password: 'admin123',
+        role: 'admin',
+        name: 'Admin User'
+    },
+
+    {
+        username: 'view',
+        password: 'view123',
+        role: 'view',
+        name: 'Viewer'
+    },
+
+    {
+        username: 'manas@boatnr.org',
+        password: 'manas123',
+        role: 'view',
+        name: 'Manas'
+        
+    },
+    {
+    username: 'gajay@boatnr.org',
+    password: 'gajay123',
+    role: 'view',
+    name: 'Gajay',
+    states: [
+        'CHANDIGARH',
+        'HIMACHAL PRADESH',
+        'JAMMU AND KASHMIR',
+        'LADAKH',
+        'PUNJAB'
+    ]
+},
+{
+    username: 'sunil@boatnr.org',
+    password: 'sunil123',
+    role: 'view',
+    name: 'Sunil'
+},
+{
+    username: 'vivek.kumar@boatnr.org',
+    password: 'vivek123',
+    role: 'view',
+    name: 'Vivek Kumar'
+},
+
+{
+    username: 'sandeep@boatnr.org',
+    password: 'sandeep123',
+    role: 'view',
+    name: 'Sandeep'
+},
+{
+    username: 'navin@boatnr.org',
+    password: 'navin123',
+    role: 'view',
+    name: 'Navin',
+
+    states: [
+        'UTTARAKHAND'
+    ],
+
+    districts: [
+        'AGRA',
+        'FIROZABAD',
+        'MATHURA',
+        'ALIGARH',
+        'ETAH',
+        'HATHRAS',
+        'KASGANJ',
+        'AYODHYA',
+        'AMBEDKAR NAGAR',
+        'SULTANPUR',
+        'AMETHI',
+        'AZAMGARH',
+        'BALLIA',
+        'MAU',
+        'BAREILLY',
+        'BADAUN',
+        'BASTI',
+        'SANT KABIR NAGAR',
+        'SIDDHARTHNAGAR',
+        'SHRAVASTI',
+        'BALRAMPUR',
+        'GONDA',
+        'GORAKHPUR',
+        'DEORIA',
+        'KUSHINAGAR',
+        'MAHARAJGANJ',
+        'MEERUT',
+        'BAGHPAT',
+        'BULANDSHAHR',
+        'HAPUR',
+        'MIRZAPUR',
+        'SONBHADRA',
+        'BHADOHI',
+        'MORADABAD',
+        'AMROHA',
+        'BIJNOR',
+        'RAMPUR',
+        'SAMBHAL',
+        'PRAYAGRAJ',
+        'KAUSHAMBI',
+        'PRATAPGARH',
+        'VARANASI',
+        'CHANDAULI',
+        'GHAZIPUR',
+        'JAUNPUR',
+        'SAHARANPUR',
+        'MUZAFFARNAGAR',
+        'SHAMLI'
+    ]
+}
+];
 
             const user = validUsers.find(u => u.username === username && u.password === password);
 
