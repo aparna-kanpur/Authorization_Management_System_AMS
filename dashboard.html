@@ -21,7 +21,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            background: linear-gradient(135deg, #c5dcf2, #9fc5e8);
             padding: 20px;
             display: flex;
             justify-content: space-between;
@@ -826,10 +826,20 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-left">
-            <h1>📊Authorization Management System(AMS)-BOATNR</h1>
-             <!--<p>Google Drive Cloud Database Management Portal</p>-->
-        </div>
+       <div class="header-left" style="display:flex; align-items:center; gap:15px;">
+
+    <img src="boat-logo.png"
+         alt="BOAT NR Logo"
+         style="height:60px; width:auto;">
+
+    <div>
+        <h1 style="color: #1e293b;">Authorization Management System (AMS)-BOATNR</h1>
+        <p style="font-size:15px; font-weight:700; color:#2563eb;">
+    Board of Apprenticeship Training (Northern Region)
+</p>
+    </div>
+
+</div>
         <div class="header-right">
             <div class="user-info">
                 Logged in as: <strong id="userNameDisplay">Guest</strong> |
@@ -863,7 +873,9 @@
    <div class="stats" id="statsSection" style="display:none;">
             <div class="stat-box">
                 <h3 id="totalRows">0</h3>
-                <p id="totalRowsLabel">Total Records</p>
+                <p id="totalRowsLabel" style="font-size:15px; font-weight:700; color:#212529;">
+    Total Records
+</p>
             </div>
 
     <!-- UPDATE: Auth Received Box with Mini Sector Counters -->
@@ -886,7 +898,9 @@
             </div>
         </div>
         
-        <p style="margin-top: 5px;">Auth Received</p>
+       <p style="margin-top: 5px; color: #000000; font-weight: 700;">
+    Auth Received
+</p>
     </div>
 
     
@@ -896,7 +910,9 @@
 
         <div style="text-align:center;">
             <div style="font-size:28px;">📄</div>
-            <div style="font-size:13px; color:#6c757d; font-weight:600;">Hard Copy</div>
+            <div style="font-size:13px; color:#000000; font-weight:700;">
+    Hard Copy
+</div>
             <div id="hardCopyCount" style="font-size:30px; font-weight:800; color:#007bff;">0</div>
         </div>
 
@@ -904,13 +920,15 @@
 
         <div style="text-align:center;">
             <div style="font-size:28px;">📧</div>
-            <div style="font-size:13px; color:#6c757d; font-weight:600;">Only Soft Copy</div>
+            <div style="font-size:13px; color:#000000; font-weight:700;">Only Soft Copy</div>
             <div id="softCopyCount" style="font-size:30px; font-weight:800; color:#28a745;">0</div>
         </div>
 
     </div>
 
-    <p>Authorization Copy Received</p>
+    <p style="color: #000000; font-weight: 700;">
+    Authorization Copy Received
+</p>
 
 </div>
 <div class="stat-box pending" style="display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
@@ -933,7 +951,9 @@
         </div>
     </div>
 
-    <p style="margin-top: 5px;">Auth Pending</p>
+    <p style="margin-top: 5px; color: #000000; font-weight: 700;">
+    Auth Pending
+</p>
 </div>
 
 </div>
@@ -947,6 +967,18 @@
                 <div class="multiselect-options" id="stateFilterOptions"></div>
             </div>
 
+            <!-- MULTI-SELECT DISTRICT FILTER -->
+<div class="multiselect-container" id="districtFilterContainer">
+    <div class="multiselect-select"
+         onclick="toggleDropdown('districtFilterContainer')">
+        District (All)
+    </div>
+
+    <div class="multiselect-options"
+         id="districtFilterOptions">
+    </div>
+</div>
+
             <!-- MULTI-SELECT COMPLIANCE FILTER -->
             <div class="multiselect-container" id="complianceFilterContainer">
                 <div class="multiselect-select" onclick="toggleDropdown('complianceFilterContainer')">💼 Compliance (All)</div>
@@ -958,7 +990,7 @@
     📥 Bulk Upload
 </button>
             <button class="btn btn-warning" onclick="exportToCSV()">📥 Export Filtered</button>
-            <button class="btn btn-primary" onclick="loadData()">🔄 Refresh Table</button>
+            <button class="btn btn-primary" onclick="loadData()">🔄 Clear Filters</button>
         </div>
 
         <!-- ADD FORM -->
@@ -1106,6 +1138,8 @@
         let uniqueComplianceSuggestions = [];
         let uniqueSectorSuggestions = [];
         let selectedStates = [];
+        let uniqueDistrictSuggestions = [];
+let selectedDistricts = [];
         let selectedCompliance = [];
 
         document.getElementById('apiUrl').value = API_URL;
@@ -1160,47 +1194,230 @@
             }
         }
 
-        async function loadData() {
-            if (!API_URL) return;
-            const sheetName = document.getElementById('sheetSelect').value;
-            document.getElementById('tableSection').innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>💾 Streaming table data from Google Drive...</p>
-                </div>`;
-            try {
-                const url = `${API_URL}?action=read&sheet=${encodeURIComponent(sheetName)}`;
-                const response = await fetch(url);
-                const result = await response.json();
-                if (result.success) {
-                    headers = result.headers;
-                    allData = result.data.map((row, index) => {
-                        if (!row._rowIndex) row._rowIndex = index + 2;
-                        return row;
-                    });
-                    filteredData = [...allData];
-                    document.getElementById('statsSection').style.display = 'flex';
-                    document.getElementById('toolbarSection').style.display = 'flex';
-                    selectedStates = [];
-                    selectedCompliance = [];
-                    extractSuggestionData();
-                    generateStateMultiOptions();
-                    generateComplianceMultiOptions();
-                    updateMetricsCounters();
-                    renderTable();
-                    showToast(`✅ Loaded successfully. Active records: ${result.totalRows}`, 'success');
-                } else {
-                    showToast('❌ Retrieval Failed: ' + result.error, 'error');
-                }
-            } catch (err) {
-                showToast('❌ Client Network Error occurred.', 'error');
-            }
-        }
+  async function loadData() {
+    if (!API_URL) return;
+    const sheetName = document.getElementById('sheetSelect').value;
+    document.getElementById('tableSection').innerHTML = `
+        <div class="loading">
+            <div class="spinner"></div>
+            <p> Streaming table data from Google Drive...</p>
+        </div>`;
+    try {
+        const url = `${API_URL}?action=read&sheet=${encodeURIComponent(sheetName)}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+            headers = result.headers;
+            
+            // 1. Google Sheet से सारा डेटा लोड करें
+            let rawData = result.data.map((row, index) => {
+                if (!row._rowIndex) row._rowIndex = index + 2;
+                return row;
+            });
 
+            // ==========================================
+            // USER-WISE ACCESS RULES (Updated with navin@boatnr.org)
+            // ==========================================
+            const userAccessMap = {
+
+                
+                // New User: navin@boatnr.org (Access to specific UP districts & All Uttarakhand)
+                "navin@boatnr.org": [
+                    {
+                        state: "UTTAR PRADESH",
+                        districts: [
+                            "AGRA", "FIROZABAD", "MATHURA", "ALIGARH", "ETAH", "HATHRAS", "KASGANJ", 
+                            "AYODHYA", "AMBEDKAR NAGAR", "SULTANPUR", "AMETHI", "AZAMGARH", "BALLIA", "MAU", 
+                            "BAREILLY", "BADAUN", "BASTI", "SANT KABIR NAGAR", "SIDDHARTHNAGAR", "SHRAVASTI", 
+                            "BALRAMPUR", "GONDA", "GORAKHPUR", "DEORIA", "KUSHINAGAR", "MAHARAJGANJ", "MEERUT", 
+                            "BAGHPAT", "BULANDSHAHR", "HAPUR", "MIRZAPUR", "SONBHADRA", "BHADOHI", 
+                            "BHADOHI (SANT RAVIDAS NAGAR)", "MORADABAD", "AMROHA", "AMROHA (J.P. NAGAR)", 
+                            "BIJNOR", "RAMPUR", "SAMBHAL", "PRAYAGRAJ", "PRAYAGRAJ (ALLAHABAD)", "KAUSHAMBI", 
+                            "PRATAPGARH", "VARANASI", "CHANDAULI", "GHAZIPUR", "JAUNPUR", "SAHARANPUR", 
+                            "MUZAFFARNAGAR", "SHAMLI"
+                        ]
+                    },
+                    {
+                        state: "UTTARAKHAND",
+                        districts: "ALL"
+                    }
+                ],
+
+                "vivek.kumar@boatnr.org": [
+    {
+        state: "UTTAR PRADESH",
+        districts: [
+            "MAINPURI",
+            "BARABANKI",
+            "PILIBHIT",
+            "SHAHJAHANPUR",
+            "BANDA",
+            "CHITRAKOOT",
+            "HAMIRPUR",
+            "MAHOBA",
+            "BAHRAICH",
+            "JHANSI",
+            "JALAUN",
+            "LALITPUR",
+            "KANPUR NAGAR",
+            "KANPUR DEHAT",
+            "ETAWAH",
+            "FARRUKHABAD",
+            "KANNAUJ",
+            "AURAIYA",
+            "LUCKNOW",
+            "HARDOI",
+            "LAKHIMPUR KHERI",
+            "RAEBARELI",
+            "SITAPUR",
+            "UNNAO",
+            "FATEHPUR"
+        ]
+    }
+],
+"sandeep@boatnr.org": [
+    {
+        state: "HARYANA",
+        districts: [
+            "AMBALA",
+            "BHIWANI",
+            "FARIDABAD",
+            "FATEHABAD",
+            "GURUGRAM",
+            "JIND",
+            "KAITHAL",
+            "KARNAL",
+            "KURUKSHETRA",
+            "PANCHKULA",
+            "PANIPAT",
+            "ROHTAK",
+            "SONIPAT",
+            "YAMUNANAGAR"
+        ]
+    }
+],
+
+                // User: gajay@boatnr.org (Access to 5 States, All Districts)
+                "gajay@boatnr.org": [
+                    { state: "CHANDIGARH", districts: "ALL" },
+                    { state: "HIMACHAL PRADESH", districts: "ALL" },
+                    { state: "JAMMU & KASHMIR", districts: "ALL" },
+                    { state: "JAMMU AND KASHMIR", districts: "ALL" }, // Safe fallback for spelling
+                    { state: "LADAKH", districts: "ALL" },
+                    { state: "PUNJAB", districts: "ALL" }
+                ],
+                
+                // Existing Scoped Users
+                "manas@boatnr.org": [
+    {
+        state: "RAJASTHAN",
+        districts: "ALL"
+    },
+    {
+        state: "HARYANA",
+        districts: [
+            "CHARKHI DADRI",
+            "HISAR",
+            "JHAJJAR",
+            "MAHENDRAGARH",
+            "NUH",
+            "PALWAL",
+            "REWARI",
+            "SIRSA",
+            "BHIWANI"
+        ]
+    }
+],
+
+
+"sunil@boatnr.org": [
+    {
+        state: "DELHI",
+        districts: "ALL"
+    },
+    {
+        state: "UTTAR PRADESH",
+        districts: [
+            "GAUTAM BUDDHA NAGAR",
+            "GHAZIABAD"
+        ]
+    }
+],
+       
+            };
+
+            const currentUsername = (localStorage.getItem('taskflow_username') || '').toLowerCase().trim();
+            const currentUserRole = localStorage.getItem('taskflow_role') || 'view';
+
+            const stateColumnKey = getSafeHeaderKey(['state']);
+            const districtColumnKey = getSafeHeaderKey(['district']);
+
+            // 2. Filter logic: Agar user Admin nahi hai aur system me uske rules hain
+            if (currentUserRole !== 'admin' && userAccessMap[currentUsername] && stateColumnKey && districtColumnKey) {
+                
+                // Rules ko uniform Array format me convert karein
+                let userRules = userAccessMap[currentUsername];
+                if (!Array.isArray(userRules)) {
+                    userRules = [userRules];
+                }
+                
+                allData = rawData.filter(row => {
+                    const rowState = String(row[stateColumnKey] || '').trim().toUpperCase();
+                    const rowDistrict = String(row[districtColumnKey] || '').trim().toUpperCase();
+                    
+                    // Check karein ki ye row user ke kisi bhi rule se match karti hai ya nahi
+                    return userRules.some(rule => {
+                        const targetState = String(rule.state).trim().toUpperCase();
+                        
+                        // State check
+                        if (rowState !== targetState) return false;
+                        
+                        // District "ALL" check
+                        if (rule.districts === "ALL") return true;
+                        
+                        // Specific District check
+                        return Array.isArray(rule.districts) && rule.districts.includes(rowDistrict);
+                    });
+                });
+                
+                console.log(`Data scoped securely for: ${currentUsername}`);
+            } else {
+                allData = rawData;
+                console.log("Full data access granted to:", currentUserRole);
+            }
+            // ==========================================
+
+            filteredData = [...allData];
+            document.getElementById('statsSection').style.display = 'flex';
+            document.getElementById('toolbarSection').style.display = 'flex';
+            
+            selectedStates = [];
+            selectedCompliance = [];
+            
+            extractSuggestionData();
+
+generateStateMultiOptions();
+generateDistrictMultiOptions();
+generateComplianceMultiOptions();
+
+updateMetricsCounters();
+            renderTable();
+            
+            showToast(` Loaded successfully. Active records: ${filteredData.length}`, 'success');
+        } else {
+            showToast(' Retrieval Failed: ' + result.error, 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showToast(' Client Network Error occurred.', 'error');
+    }
+}
        function extractSuggestionData() {
     const stateColumnKey = getSafeHeaderKey(['state']);
     const complianceColumnKey = getSafeHeaderKey(['compliance type']);
     const sectorColumnKey = getSafeHeaderKey(['sector']);
+    const districtColumnKey = getSafeHeaderKey(['district']);
 
     function uniqueCaseInsensitive(values, forceUpper = false) {
         const map = {};
@@ -1249,6 +1466,14 @@
     uniqueSectorSuggestions = sectorColumnKey
         ? uniqueCaseInsensitive(allData.map(row => row[sectorColumnKey]), true).filter(v => ['C', 'P', 'S'].includes(v))
         : [];
+
+        // District: unique values
+uniqueDistrictSuggestions = districtColumnKey
+    ? uniqueCaseInsensitive(
+          allData.map(row => row[districtColumnKey]),
+          true   // Force UPPERCASE
+      )
+    : [];
 }
 function normalizeComplianceValue(value) {
     const raw = String(value || '').trim();
@@ -1360,6 +1585,108 @@ function toggleSelectAllStates(selectAllCb) {
     document.querySelector('#complianceFilterContainer .multiselect-select').textContent = " Compliance (All) 💼";
 }
 
+function generateDistrictMultiOptions() {
+
+    const optionsDiv = document.getElementById('districtFilterOptions');
+    optionsDiv.innerHTML = '';
+    // Select All
+const selectAllDiv = document.createElement('div');
+selectAllDiv.className = 'multiselect-option';
+
+selectAllDiv.innerHTML = `
+    <input
+        type="checkbox"
+        id="district_select_all"
+        onchange="toggleSelectAllDistricts(this)"
+    />
+    <label for="district_select_all"><b>Select All</b></label>
+`;
+
+optionsDiv.appendChild(selectAllDiv);
+
+    const stateColumnKey = getSafeHeaderKey(['state']);
+    const districtColumnKey = getSafeHeaderKey(['district']);
+
+    if (!districtColumnKey) {
+        document.getElementById('districtFilterContainer').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('districtFilterContainer').style.display = 'block';
+
+    let districtList = [];
+
+    if (selectedStates.length === 0 || !stateColumnKey) {
+
+        // Koi state select nahi -> sab districts
+        districtList = [...uniqueDistrictSuggestions];
+
+    } else {
+
+        const districtSet = new Set();
+
+        allData.forEach(row => {
+
+            const rowState = String(row[stateColumnKey] || '')
+                .trim()
+                .toUpperCase();
+
+            const rowDistrict = String(row[districtColumnKey] || '')
+    .trim()
+    .toUpperCase();
+
+            if (
+                selectedStates
+                    .map(s => s.toUpperCase())
+                    .includes(rowState)
+            ) {
+                if (rowDistrict) {
+                    districtSet.add(rowDistrict);
+                }
+            }
+
+        });
+
+        districtList = Array.from(districtSet).sort();
+
+    }
+
+    districtList.forEach(district => {
+
+        const checked = selectedDistricts
+    .map(d => d.toUpperCase())
+    .includes(district.toUpperCase())
+    ? "checked"
+    : "";
+
+        const div = document.createElement('div');
+        div.className = 'multiselect-option';
+
+        div.innerHTML = `
+            <input
+                type="checkbox"
+                id="district_${district}"
+                value="${district}"
+                ${checked}
+                onchange="handleDistrictSelection()"
+            />
+
+            <label for="district_${district}">
+                ${district}
+            </label>
+        `;
+
+        optionsDiv.appendChild(div);
+    });
+
+    document.querySelector(
+        '#districtFilterContainer .multiselect-select'
+    ).textContent =
+        selectedDistricts.length === 0
+            ? "District (All)"
+            : `District (${selectedDistricts.length})`;
+}
+
 // Support Function: Jo Select All par click karne par saare checkboxes ko control karega
 function toggleSelectAllCompliance(selectAllCb) {
     const isChecked = selectAllCb.checked;
@@ -1397,7 +1724,9 @@ function toggleSelectAllCompliance(selectAllCb) {
         titleBtn.textContent = ` States (${selectedStates.length}) 🔍`;
     }
 
-    filterData();
+    selectedDistricts = [];
+generateDistrictMultiOptions();
+filterData();
 }
 
         function handleComplianceSelection() {
@@ -1428,6 +1757,53 @@ function toggleSelectAllCompliance(selectAllCb) {
     }
 
     filterData();
+}
+function handleDistrictSelection() {
+
+    selectedDistricts = [];
+
+    document.querySelectorAll(
+        '#districtFilterOptions input[type="checkbox"]:checked'
+    ).forEach(cb => {
+        selectedDistricts.push(cb.value.toUpperCase());
+    });
+
+    const titleBtn = document.querySelector(
+        '#districtFilterContainer .multiselect-select'
+    );
+
+    titleBtn.textContent =
+        selectedDistricts.length === 0
+            ? "District (All)"
+            : `District (${selectedDistricts.length})`;
+    const allCheckboxes = document.querySelectorAll(
+    '#districtFilterOptions input[type="checkbox"]:not(#district_select_all)'
+);
+
+const checkedCheckboxes = document.querySelectorAll(
+    '#districtFilterOptions input[type="checkbox"]:checked:not(#district_select_all)'
+);
+
+const selectAll = document.getElementById('district_select_all');
+
+if (selectAll) {
+    selectAll.checked =
+        allCheckboxes.length > 0 &&
+        allCheckboxes.length === checkedCheckboxes.length;
+}
+    filterData();
+}
+function toggleSelectAllDistricts(selectAllCheckbox) {
+
+    const checkboxes = document.querySelectorAll(
+        '#districtFilterOptions input[type="checkbox"]:not(#district_select_all)'
+    );
+
+    checkboxes.forEach(cb => {
+        cb.checked = selectAllCheckbox.checked;
+    });
+
+    handleDistrictSelection();
 }
 function getAuthStatusColumnKey() {
     // Exact match first
@@ -2217,6 +2593,7 @@ if (authColumnKey) {
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
             const stateColumnKey = getSafeHeaderKey(['state']);
             const complianceColumnKey = getSafeHeaderKey(['compliance type']);
+            const districtColumnKey = getSafeHeaderKey(['district']);
             filteredData = allData.filter(row => {
                 const matchesSearch = headers.some(h => String(row[h] || '').toLowerCase().includes(searchQuery));
                 let matchesState = true;
@@ -2241,7 +2618,25 @@ if (selectedCompliance.length > 0 && complianceColumnKey) {
 
     matchesCompliance = selectedComplianceNormalized.includes(rowCompliance);
 }
-                return matchesSearch && matchesState && matchesCompliance;
+// District Filter
+let matchesDistrict = true;
+
+if (selectedDistricts.length > 0 && districtColumnKey) {
+
+    const rowDistrict = row[districtColumnKey]
+        ? row[districtColumnKey].toString().trim().toUpperCase()
+        : '';
+
+    const selectedDistrictsUpper = selectedDistricts.map(d =>
+        d.trim().toUpperCase()
+    );
+
+    matchesDistrict = selectedDistrictsUpper.includes(rowDistrict);
+}
+                return matchesSearch &&
+       matchesState &&
+       matchesDistrict &&
+       matchesCompliance;
             });
             updateMetricsCounters();
             renderTable();
