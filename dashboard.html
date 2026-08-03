@@ -1416,22 +1416,20 @@ async function loadData() {
         return Object.values(map).sort((a, b) => a.localeCompare(b));
     }
 
-    // State
+    // State suggestions
     uniqueStateSuggestions = stateColumnKey
         ? uniqueCaseInsensitive(allData.map(row => row[stateColumnKey]), true)
         : [];
 
-    // District
+    // District suggestions
     uniqueDistrictSuggestions = districtColumnKey
         ? uniqueCaseInsensitive(allData.map(row => row[districtColumnKey]), true)
         : [];
 
-    // DBT Status (Guarded)
-    uniqueDbtSuggestions = dbtColumnKey
-        ? uniqueCaseInsensitive(allData.map(row => row[dbtColumnKey]), false)
-        : ["Receiving", "Not Receiving"];
+    // >>> FIX: DBT dropdown options list is strictly mapped to our filter keys <<<
+    uniqueDbtSuggestions = ["DBT Receiving", "DBT Not Receiving"];
 
-    // Compliance
+    // Compliance suggestions
     if (complianceColumnKey) {
         const complianceSet = {};
         allData.forEach(row => {
@@ -2554,17 +2552,14 @@ function applyTitleCaseToEditFields() {
         return;
     }
     
-    // Header Row generate karein (Backend se "DBT Status" automatic aa raha hai)
     let html = '<table><thead><tr><th>Sr.No</th>';
     headers.forEach(h => html += `<th>${h}</th>`);
-    html += `<th>DBT Status</th>`;
     html += '<th>Actions</th></tr></thead><tbody>';
     
     filteredData.forEach((row, index) => {
         const rowIndex = parseInt(row._rowIndex);
         const isEditing = editingRow === rowIndex;
         
-        // Row background color based on Authorization Status
         let rowStyle = "";
         const authColumnKey = getAuthStatusColumnKey();
 
@@ -2594,38 +2589,30 @@ function applyTitleCaseToEditFields() {
                 html += `<td>${renderEditControl(h, colIndex, rowIndex, cellValue)}</td>`;
             } else {
                 let display = cellValue;
-                const lower = String(cellValue).toLowerCase();
+                const lower = String(cellValue).toLowerCase().trim();
+                const normH = h.toLowerCase().trim();
 
-                // >>> DYNAMIC BADGE COLOR CODING FOR ALL STATUS COLUMNS (Including DBT Status) <<<
-                if ((lower.includes('receiving') && !lower.includes('not')) || 
-                    lower.includes('received') || 
-                    lower === 'yes' || 
-                    ['done','complete','completed','active','pass','approved'].includes(lower)) {
-                    display = `<span class="badge badge-green">${cellValue}</span>`;
-                } else if (lower.includes('not receiving') || 
-                           lower === 'no' || 
-                           ['failed','cancel','cancelled','rejected'].includes(lower)) {
-                    display = `<span class="badge badge-red">${cellValue}</span>`;
-                } else if (['pending','in progress','processing','review'].includes(lower) || cellValue === '') {
-                    display = `<span class="badge badge-yellow">${cellValue || 'Pending'}</span>`;
+                // >>> DYNAMIC MAP: Blank & Pending are strictly displayed as "DBT Not Receiving" <<<
+                if (normH.includes('dbt')) {
+                    if (lower === 'yes' || lower === 'receiving' || lower.includes('dbt receiving') || lower.includes('receiving')) {
+                        display = `<span class="badge badge-green">DBT Receiving</span>`;
+                    } else {
+                        // All other values (empty, pending, no, not receiving) are strictly RED
+                        display = `<span class="badge badge-red">DBT Not Receiving</span>`;
+                    }
+                } else {
+                    if (lower.includes('received') || lower === 'yes' || ['done','complete','completed','active','pass','approved'].includes(lower)) {
+                        display = `<span class="badge badge-green">${cellValue}</span>`;
+                    } else if (['pending','in progress','processing','review'].includes(lower) || cellValue === '') {
+                        display = `<span class="badge badge-yellow">${cellValue || 'Pending'}</span>`;
+                    } else if (lower === 'no' || ['failed','cancel','cancelled','rejected'].includes(lower)) {
+                        display = `<span class="badge badge-red">${cellValue}</span>`;
+                    }
                 }
 
                 html += `<td>${display}</td>`;
             }
         });
-        let dbtStatus = String(row["DBT Status"] || "").trim().toLowerCase();
-
-let dbtDisplay = '';
-
-if (dbtStatus === 'yes') {
-    dbtDisplay = `<span class="badge badge-green">Receiving</span>`;
-} else {
-    // no aur blank dono Not Receiving
-    dbtDisplay = `<span class="badge badge-red">Not Receiving</span>`;
-}
-
-html += `<td>${dbtDisplay}</td>`;
-
         
         if (isEditing) {
             html += `<td class="action-btns">
@@ -2702,11 +2689,14 @@ function filterData() {
 }
 
 // 2. Real Filter Execution (Optimised with Search Cache)
+// 100% Accurate Filter Engine (Treats "Pending" & "" as Not Receiving)
 function executeFilterData() {
     const searchQuery = document.getElementById('searchInput').value.toLowerCase();
     const stateColumnKey = getSafeHeaderKey(['state']);
     const complianceColumnKey = getSafeHeaderKey(['compliance type']);
     const districtColumnKey = getSafeHeaderKey(['district']);
+    
+    // Dynamic DBT column match
     const dbtColumnKey = headers.find(h => {
         const normH = h.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
         return normH === "dbtstatus" || normH === "dbt";
@@ -2718,36 +2708,41 @@ function executeFilterData() {
     const dbtSelected = (typeof selectedDbtStatus !== 'undefined' && selectedDbtStatus) ? selectedDbtStatus.map(d => String(d).trim().toLowerCase()) : [];
 
     filteredData = allData.filter(row => {
-        // FAST SEARCH: Uses pre-compiled string (No column looping!)
+        // 1. Search Bar Filter
         const matchesSearch = row._searchStr ? row._searchStr.includes(searchQuery) : true;
         
+        // 2. State Filter
         let matchesState = true;
         if (stateSelected.length > 0 && stateColumnKey) {
             const rowState = String(row[stateColumnKey] || '').trim().toUpperCase();
             matchesState = stateSelected.includes(rowState);
         }
 
+        // 3. District Filter
         let matchesDistrict = true;
         if (distSelected.length > 0 && districtColumnKey) {
             const rowDistrict = String(row[districtColumnKey] || '').trim().toUpperCase();
             matchesDistrict = distSelected.includes(rowDistrict);
         }
 
+        // 4. Compliance Filter
         let matchesCompliance = true;
         if (compSelected.length > 0 && complianceColumnKey) {
             const rowCompliance = normalizeComplianceValue(row[complianceColumnKey]);
             matchesCompliance = compSelected.includes(rowCompliance);
         }
 
+        // 5. DBT Status Filter (Universal Match Logic: Blank, pending, no = dbt not receiving)
         let matchesDbt = true;
         if (dbtSelected.length > 0) {
             const rawRowDbt = String(row["DBT Status"] || row["DBT_Status"] || row[dbtColumnKey] || "").trim().toLowerCase();
             
-            let rowDbt = "pending";
-            if (rawRowDbt === "yes" || rawRowDbt === "receiving" || rawRowDbt.includes("receiving")) {
+            // Default "dbt not receiving" (Covers: empty cells, "pending", "no", "not receiving")
+            let rowDbt = "dbt not receiving"; 
+            
+            // Only explicitly positive values are "dbt receiving"
+            if (rawRowDbt === "yes" || rawRowDbt === "receiving" || rawRowDbt.includes("receiving") || rawRowDbt === "dbt receiving") {
                 rowDbt = "dbt receiving";
-            } else if (rawRowDbt === "no" || rawRowDbt === "not receiving" || rawRowDbt.includes("not receiving")) {
-                rowDbt = "dbt not receiving";
             }
 
             matchesDbt = dbtSelected.includes(rowDbt);
@@ -2758,8 +2753,7 @@ function executeFilterData() {
 
     updateMetricsCounters();
     renderTable();
-}// ===== CUSTOMIZED ADD RECORD FUNCTION FOR YOUR COLUMNS =====
-// ===== NORMALIZE HEADER NAME =====
+}// ===== NORMALIZE HEADER NAME =====
 function normalizeHeaderName(str) {
     return String(str || '')
         .trim()
