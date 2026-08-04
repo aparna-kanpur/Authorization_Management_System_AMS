@@ -1427,7 +1427,7 @@ async function loadData() {
         : [];
 
     // >>> FIX: DBT dropdown options list is strictly mapped to our filter keys <<<
-    uniqueDbtSuggestions = ["DBT Receiving", "DBT Not Receiving"];
+        uniqueDbtSuggestions = ["DBT Receiving", "DBT Not Receiving", "Pending"];
 
     // Compliance suggestions
     if (complianceColumnKey) {
@@ -2552,6 +2552,7 @@ function applyTitleCaseToEditFields() {
         return;
     }
     
+    // Header Row generate karein
     let html = '<table><thead><tr><th>Sr.No</th>';
     headers.forEach(h => html += `<th>${h}</th>`);
     html += '<th>Actions</th></tr></thead><tbody>';
@@ -2560,6 +2561,7 @@ function applyTitleCaseToEditFields() {
         const rowIndex = parseInt(row._rowIndex);
         const isEditing = editingRow === rowIndex;
         
+        // Row background color based on Authorization Status
         let rowStyle = "";
         const authColumnKey = getAuthStatusColumnKey();
 
@@ -2592,15 +2594,18 @@ function applyTitleCaseToEditFields() {
                 const lower = String(cellValue).toLowerCase().trim();
                 const normH = h.toLowerCase().trim();
 
-                // >>> DYNAMIC MAP: Blank & Pending are strictly displayed as "DBT Not Receiving" <<<
+                // >>> DYNAMIC MAP: Green for Yes, Red for No, Yellow for Blank/Pending <<<
                 if (normH.includes('dbt')) {
                     if (lower === 'yes' || lower === 'receiving' || lower.includes('dbt receiving') || lower.includes('receiving')) {
                         display = `<span class="badge badge-green">DBT Receiving</span>`;
-                    } else {
-                        // All other values (empty, pending, no, not receiving) are strictly RED
+                    } else if (lower === 'no' || lower === 'not receiving' || lower.includes('not receiving') || lower.includes('dbt not receiving')) {
                         display = `<span class="badge badge-red">DBT Not Receiving</span>`;
+                    } else {
+                        // Empty cells & "Pending" are strictly displayed as YELLOW "Pending"
+                        display = `<span class="badge badge-yellow">Pending</span>`;
                     }
                 } else {
+                    // General badge color coding for other status columns
                     if (lower.includes('received') || lower === 'yes' || ['done','complete','completed','active','pass','approved'].includes(lower)) {
                         display = `<span class="badge badge-green">${cellValue}</span>`;
                     } else if (['pending','in progress','processing','review'].includes(lower) || cellValue === '') {
@@ -2636,7 +2641,6 @@ function applyTitleCaseToEditFields() {
     container.innerHTML = html;
     applyTitleCaseToEditFields();
 }
-
         function showDeleteModal(rowIndex) {
             if (userRole !== 'admin') {
                 showToast('View-only mode: Deletion not allowed', 'error');
@@ -2695,8 +2699,6 @@ function executeFilterData() {
     const stateColumnKey = getSafeHeaderKey(['state']);
     const complianceColumnKey = getSafeHeaderKey(['compliance type']);
     const districtColumnKey = getSafeHeaderKey(['district']);
-    
-    // Dynamic DBT column match
     const dbtColumnKey = headers.find(h => {
         const normH = h.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
         return normH === "dbtstatus" || normH === "dbt";
@@ -2732,17 +2734,18 @@ function executeFilterData() {
             matchesCompliance = compSelected.includes(rowCompliance);
         }
 
-        // 5. DBT Status Filter (Universal Match Logic: Blank, pending, no = dbt not receiving)
+        // 5. DBT Status Filter (Universal 3-way Match Logic)
         let matchesDbt = true;
         if (dbtSelected.length > 0) {
             const rawRowDbt = String(row["DBT Status"] || row["DBT_Status"] || row[dbtColumnKey] || "").trim().toLowerCase();
             
-            // Default "dbt not receiving" (Covers: empty cells, "pending", "no", "not receiving")
-            let rowDbt = "dbt not receiving"; 
+            // Map excel value to 3 distinct filter categories: "dbt receiving", "dbt not receiving", "pending"
+            let rowDbt = "pending"; // Default is pending
             
-            // Only explicitly positive values are "dbt receiving"
             if (rawRowDbt === "yes" || rawRowDbt === "receiving" || rawRowDbt.includes("receiving") || rawRowDbt === "dbt receiving") {
                 rowDbt = "dbt receiving";
+            } else if (rawRowDbt === "no" || rawRowDbt === "not receiving" || rawRowDbt.includes("not receiving") || rawRowDbt === "dbt not receiving") {
+                rowDbt = "dbt not receiving";
             }
 
             matchesDbt = dbtSelected.includes(rowDbt);
@@ -2753,7 +2756,7 @@ function executeFilterData() {
 
     updateMetricsCounters();
     renderTable();
-}// ===== NORMALIZE HEADER NAME =====
+}
 function normalizeHeaderName(str) {
     return String(str || '')
         .trim()
