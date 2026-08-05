@@ -846,7 +846,7 @@
     <div class="header">
        <div class="header-left" style="display:flex; align-items:center; gap:15px;">
 
-    <img src="boat-logo.png"
+    <img src="images/boat-logo.png"
          alt="BOAT NR Logo"
          style="height:60px; width:auto;">
 
@@ -2111,176 +2111,6 @@ function checkEditEstablishmentIdLive(input, rowIndex) {
     }
 }
 
-function renderEditControl(headerName, colIndex, rowIndex, cellValue) {
-    const fieldId = `edit_col_${colIndex}_${rowIndex}`;
-    const value = escapeHtml(cellValue);
-    const norm = normalizeHeaderName(headerName);
-
-    // Establishment ID uppercase + duplicate check
-    if (norm === normalizeHeaderName('Establishment ID')) {
-        return `
-            <input
-                class="edit-input edit-field"
-                type="text"
-                id="${fieldId}"
-                data-col-index="${colIndex}"
-                value="${value}"
-                oninput="this.value = this.value.toUpperCase(); checkEditEstablishmentIdLive(this, ${rowIndex});"
-                onblur="checkEditEstablishmentIdLive(this, ${rowIndex})"
-            />
-            <small id="${fieldId}_duplicate_msg" style="font-size:11px; display:block; margin-top:3px;"></small>
-        `;
-    }
-
-    // Sector dropdown
-    if (norm === normalizeHeaderName('Sector')) {
-        const sectorOptions = getUniqueColumnValuesByHeader(headerName);
-
-        let optionsHtml = `<option value="">Select Sector</option>`;
-
-        sectorOptions.forEach(sec => {
-            const selected = String(sec) === String(cellValue).trim().toUpperCase() ? 'selected' : '';
-            optionsHtml += `<option value="${escapeHtml(sec)}" ${selected}>${escapeHtml(sec)}</option>`;
-        });
-
-        return `
-            <select
-                class="edit-input edit-field"
-                id="${fieldId}"
-                data-col-index="${colIndex}"
-            >
-                ${optionsHtml}
-            </select>
-        `;
-    }
-
-    // State searchable dropdown + manual
-    if (norm === normalizeHeaderName('State')) {
-        const stateOptions = getUniqueColumnValuesByHeader(headerName);
-        const listId = `edit_state_options_${colIndex}_${rowIndex}`;
-
-        let optionsHtml = '';
-
-        stateOptions.forEach(state => {
-            optionsHtml += `<option value="${escapeHtml(state)}"></option>`;
-        });
-
-        return `
-            <input
-                class="edit-input edit-field"
-                type="text"
-                id="${fieldId}"
-                data-col-index="${colIndex}"
-                value="${value}"
-                list="${listId}"
-                autocomplete="off"
-            />
-            <datalist id="${listId}">
-                ${optionsHtml}
-            </datalist>
-        `;
-    }
-
-    // Date picker
-    if (norm === normalizeHeaderName('Date of receiving of Authorization Letter')) {
-        let dateValue = '';
-
-        if (cellValue) {
-            const d = new Date(cellValue);
-            if (!isNaN(d.getTime())) {
-                dateValue = d.toISOString().slice(0, 10);
-            } else {
-                dateValue = String(cellValue).slice(0, 10);
-            }
-        }
-
-        return `
-            <input
-                class="edit-input edit-field"
-                type="date"
-                id="${fieldId}"
-                data-col-index="${colIndex}"
-                value="${escapeHtml(dateValue)}"
-            />
-        `;
-    }
-
-    // Compliance dropdown
-    if (norm === normalizeHeaderName('Compliance type (Own Employee/ Consultant/ Employee of Agency)')) {
-        const current = String(cellValue || '').trim();
-
-        return `
-            <select
-                class="edit-input edit-field"
-                id="${fieldId}"
-                data-col-index="${colIndex}"
-            >
-                <option value="">Select Compliance Type</option>
-                <option value="Own Employee" ${current === 'Own Employee' ? 'selected' : ''}>Self</option>
-                <option value="Employee of Agency" ${current === 'Employee of Agency' ? 'selected' : ''}>Employee of Agency</option>
-                <option value="Consultant" ${current === 'Consultant' ? 'selected' : ''}>Consultant</option>
-            </select>
-        `;
-    }
-
-    // Status dropdown
-    if (norm === normalizeHeaderName('Status of Authorization Letter receipt')) {
-        const current = String(cellValue || '').trim();
-
-        return `
-            <select
-                class="edit-input edit-field"
-                id="${fieldId}"
-                data-col-index="${colIndex}"
-            >
-                <option value="">Select Status</option>
-                <option value="Hard copy Received" ${current === 'Hard copy Received' ? 'selected' : ''}>Hard copy Received</option>
-                <option value="Soft copy Received" ${current === 'Soft copy Received' ? 'selected' : ''}>Soft copy Received</option>
-                <option value="Pending" ${current === 'Pending' ? 'selected' : ''}>Pending</option>
-                <option value="Not Received" ${current === 'Not Received' ? 'selected' : ''}>Not Received</option>
-            </select>
-        `;
-    }
-
-    // Email
-    if (norm.includes('email')) {
-        return `
-            <input
-                class="edit-input edit-field"
-                type="email"
-                id="${fieldId}"
-                data-col-index="${colIndex}"
-                value="${value}"
-            />
-        `;
-    }
-
-    // Mobile
-    if (norm.includes('mobile') || norm.includes('number')) {
-        return `
-            <input
-                class="edit-input edit-field"
-                type="tel"
-                id="${fieldId}"
-                data-col-index="${colIndex}"
-                value="${value}"
-            />
-        `;
-    }
-
-    // Normal text with Title Case
-    return `
-        <input
-            class="edit-input edit-field"
-            type="text"
-            id="${fieldId}"
-            data-col-index="${colIndex}"
-            value="${value}"
-            oninput="this.value = toTitleCaseText(this.value)"
-        />
-    `;
-}
-
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -2552,14 +2382,12 @@ function applyTitleCaseToEditFields() {
         return;
     }
     
-    // Header Row generate karein
     let html = '<table><thead><tr><th>Sr.No</th>';
     headers.forEach(h => html += `<th>${h}</th>`);
     html += '<th>Actions</th></tr></thead><tbody>';
     
     filteredData.forEach((row, index) => {
         const rowIndex = parseInt(row._rowIndex);
-        const isEditing = editingRow === rowIndex;
         
         // Row background color based on Authorization Status
         let rowStyle = "";
@@ -2580,7 +2408,6 @@ function applyTitleCaseToEditFields() {
             }
         }
         
-               // UPDATED: Added Double-Click trigger, pointer cursor, and tooltip title
         html += `<tr style="${rowStyle}; cursor: pointer;" title="Double-click to view complete establishment details" ondblclick="viewRowDetails(${rowIndex})"><td style="color:#6c757d; font-weight:bold;">${index + 1}</td>`;
         
         headers.forEach((h, colIndex) => {
@@ -2588,59 +2415,50 @@ function applyTitleCaseToEditFields() {
                 ? row._rowValues[colIndex]
                 : (row[h] !== undefined ? row[h] : '');
 
-            if (isEditing) {
-                html += `<td>${renderEditControl(h, colIndex, rowIndex, cellValue)}</td>`;
-            } else {
-                let display = cellValue;
-                const lower = String(cellValue).toLowerCase().trim();
-                const normH = h.toLowerCase().trim();
+            let display = cellValue;
+            const lower = String(cellValue).toLowerCase().trim();
+            const normH = h.toLowerCase().trim();
 
-                // >>> DYNAMIC MAP: Green for Yes, Red for No, Yellow for Blank/Pending <<<
-                if (normH.includes('dbt')) {
-                    if (lower === 'yes' || lower === 'receiving' || lower.includes('dbt receiving') || lower.includes('receiving')) {
-                        display = `<span class="badge badge-green">DBT Receiving</span>`;
-                    } else if (lower === 'no' || lower === 'not receiving' || lower.includes('not receiving') || lower.includes('dbt not receiving')) {
-                        display = `<span class="badge badge-red">DBT Not Receiving</span>`;
-                    } else {
-                        // Empty cells & "Pending" are strictly displayed as YELLOW "Pending"
-                        display = `<span class="badge badge-yellow">Pending</span>`;
-                    }
-                } else {
-                    // General badge color coding for other status columns
-                    if (lower.includes('received') || lower === 'yes' || ['done','complete','completed','active','pass','approved'].includes(lower)) {
-                        display = `<span class="badge badge-green">${cellValue}</span>`;
-                    } else if (['pending','in progress','processing','review'].includes(lower) || cellValue === '') {
-                        display = `<span class="badge badge-yellow">${cellValue || 'Pending'}</span>`;
-                    } else if (lower === 'no' || ['failed','cancel','cancelled','rejected'].includes(lower)) {
-                        display = `<span class="badge badge-red">${cellValue}</span>`;
-                    }
-                }
-
-                html += `<td>${display}</td>`;
+            // Cleanup Excel #NA formulas errors on display
+            if (normH.includes('mobile') || normH.includes('phone') || normH.includes('number')) {
+                display = String(cellValue).replace(/#N\/A/gi, '').replace(/#NA/gi, '').trim();
             }
+
+            const lowerDisplay = String(display).toLowerCase().trim();
+
+            // DYNAMIC BADGE COLOR CODING FOR ALL STATUS COLUMNS
+            if (normH.includes('dbt')) {
+                if (lowerDisplay === 'yes' || lowerDisplay === 'receiving' || lowerDisplay.includes('dbt receiving') || lowerDisplay.includes('receiving')) {
+                    display = `<span class="badge badge-green">DBT Receiving</span>`;
+                } else {
+                    display = `<span class="badge badge-red">DBT Not Receiving</span>`;
+                }
+            } else {
+                if (lowerDisplay.includes('received') || lowerDisplay === 'yes' || ['done','complete','completed','active','pass','approved'].includes(lowerDisplay)) {
+                    display = `<span class="badge badge-green">${display}</span>`;
+                } else if (['pending','in progress','processing','review'].includes(lowerDisplay) || display === '') {
+                    display = `<span class="badge badge-yellow">${display || 'Pending'}</span>`;
+                } else if (lowerDisplay === 'no' || ['failed','cancel','cancelled','rejected'].includes(lowerDisplay)) {
+                    display = `<span class="badge badge-red">${display}</span>`;
+                }
+            }
+
+            html += `<td>${display}</td>`;
         });
         
-        if (isEditing) {
+        if (userRole === 'admin') {
             html += `<td class="action-btns">
-                <button class="save-btn" onclick="saveEdit(${rowIndex})">💾 Save</button>
-                <button class="cancel-btn" onclick="cancelEdit()">✖</button>
+                <button class="edit-btn" onclick="showEditForm(${rowIndex})">✏️ Edit</button>
+                <button class="del-btn" onclick="showDeleteModal(${rowIndex})">🗑️ Delete</button>
             </td>`;
         } else {
-            if (userRole === 'admin') {
-                html += `<td class="action-btns">
-                    <button class="edit-btn" onclick="startEdit(${rowIndex})">✏️ Edit</button>
-                    <button class="del-btn" onclick="showDeleteModal(${rowIndex})">🗑️ Delete</button>
-                </td>`;
-            } else {
-                html += `<td></td>`;
-            }
+            html += `<td></td>`;
         }
         html += '</tr>';
     });
     
     html += '</tbody></table>';
     container.innerHTML = html;
-    applyTitleCaseToEditFields();
 }
         function showDeleteModal(rowIndex) {
             if (userRole !== 'admin') {
@@ -3292,25 +3110,24 @@ function hideAddForm() {
     }
 }
 // ===== SAVE NEW ROW BY COLUMN INDEX =====
+// ===== SAVE NEW ROW WITH LIVE INPUT VALIDATION =====
 async function saveNewRow() {
     const rowValues = new Array(headers.length).fill('');
-
     document.querySelectorAll('.add-input').forEach(input => {
         const colIndex = parseInt(input.getAttribute('data-col-index'));
         if (!isNaN(colIndex)) {
             rowValues[colIndex] = input.value || '';
         }
     });
+
     const estColIndex = findHeaderIndexByOccurrence('Establishment ID', 1);
-
-if (estColIndex !== -1) {
-    const estIdValue = rowValues[estColIndex];
-
-    if (isEstablishmentIdPresent(estIdValue)) {
-        showToast('❌ Record is present in database. Duplicate Establishment ID not allowed.', 'error');
-        return;
+    if (estColIndex !== -1) {
+        const estIdValue = rowValues[estColIndex];
+        if (isEstablishmentIdPresent(estIdValue)) {
+            showToast('❌ Record is present in database. Duplicate Establishment ID not allowed.', 'error');
+            return;
+        }
     }
-}
 
     // Required fields check
     const requiredLabels = [
@@ -3319,9 +3136,7 @@ if (estColIndex !== -1) {
         'District',
         'State'
     ];
-
     const missingRequired = [];
-
     requiredLabels.forEach(label => {
         const colIndex = findHeaderIndexByOccurrence(label, 1);
         if (colIndex !== -1 && !String(rowValues[colIndex] || '').trim()) {
@@ -3334,25 +3149,28 @@ if (estColIndex !== -1) {
         return;
     }
 
-    // Completely empty check
     if (rowValues.every(v => String(v || '').trim() === '')) {
         showToast('❌ Empty row rejected!', 'error');
         return;
     }
 
-    showToast('💾 Uploading...', 'info');
+    // >>> TRIGGER LIVE MOBILE/EMAIL VALIDATIONS <<<
+    const validation = validateData(rowValues, headers);
+    if (!validation.isValid) {
+        showToast(validation.message, 'error');
+        return; // Blocks upload if inputs are invalid
+    }
+    // >>> >>> >>> <<< <<< <<<
 
+    showToast('💾 Uploading...', 'info');
     try {
         const sheetName = document.getElementById('sheetSelect').value;
-
         const url =
             `${API_URL}?action=addByArray` +
             `&sheet=${encodeURIComponent(sheetName)}` +
             `&rowValues=${encodeURIComponent(JSON.stringify(rowValues))}`;
-
         const response = await fetch(url);
         const result = await response.json();
-
         if (result.success) {
             showToast('✅ Upload complete!', 'success');
             hideAddForm();
@@ -3360,113 +3178,80 @@ if (estColIndex !== -1) {
         } else {
             showToast('❌ ' + result.error, 'error');
         }
-
     } catch (err) {
         console.error(err);
         showToast('❌ Server offline or upload failed.', 'error');
     }
-}        function startEdit(rowIndex) {
-            if (userRole !== 'admin') {
-                showToast('View-only mode: Editing not allowed', 'error');
-                return;
-            }
-            editingRow = parseInt(rowIndex);
-            renderTable();
-        }
-
-        function cancelEdit() {
-            editingRow = null;
-            renderTable();
-        }
-
-        async function saveEdit(rowIndex) {
-    const rowValues = new Array(headers.length).fill('');
-
-    document.querySelectorAll(`.edit-field[data-row-index="${rowIndex}"]`).forEach(input => {
-        const colIndex = parseInt(input.getAttribute('data-col-index'));
-
-       if (!isNaN(colIndex)) {
-    let value = input.value || '';
-    const headerName = headers[colIndex] || '';
-
-    // Establishment ID uppercase
-    if (normalizeHeaderName(headerName) === normalizeHeaderName('Establishment ID')) {
-        value = value.toUpperCase();
-    }
-
-    // Text fields title case
-    if (input.getAttribute('type') === 'text' && shouldApplyTitleCase(headerName)) {
-        value = toTitleCaseText(value);
-    }
-
-    rowValues[colIndex] = value;
 }
-    });
 
-    showToast('💾 Updating...', 'info');
-
-    try {
-        const sheetName = document.getElementById('sheetSelect').value;
-
-        const body = new URLSearchParams();
-        body.append('action', 'updateByArray');
-        body.append('sheet', sheetName);
-        body.append('rowIndex', rowIndex);
-        body.append('rowValues', JSON.stringify(rowValues));
-
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            body: body
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showToast('✅ Updated!', 'success');
-            editingRow = null;
-            loadData();
-        } else {
-            showToast('❌ ' + result.error, 'error');
-        }
-
-    } catch (err) {
-        console.error(err);
-        showToast('❌ Failed.', 'error');
+       
+        // 100% Accurate Export matching the exact visible table rows, columns & Serial Numbers
+function exportToCSV() {
+    if (filteredData.length === 0) {
+        showToast('❌ No data to export!', 'error');
+        return;
     }
-}
-        function exportToCSV() {
-            if (filteredData.length === 0) {
-                showToast('❌ No data to export!', 'error');
-                return;
-            }
-            showToast('📥 Generating report...', 'info');
-            let csvContent = "\uFEFF";
-            csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\r\n";
-            filteredData.forEach(row => {
-                const rowValues = headers.map(h => {
-                    const value = row[h] !== undefined ? String(row[h]) : '';
-                    return `"${value.replace(/"/g, '""')}"`;
-                });
-                csvContent += rowValues.join(",") + "\r\n";
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const sheetName = document.getElementById('sheetSelect').value;
-            const fileName = `Authorization_List_${new Date().toISOString().slice(0, 10)}.csv`;
-            if (navigator.msSaveBlob) {
-                navigator.msSaveBlob(blob, fileName);
+    showToast('⏳ Generating report...', 'info');
+    
+    let csvContent = "\uFEFF"; // UTF-8 BOM to prevent Hindi/special character corruption in Excel
+    
+    // 1. Table ke headers ke sath "Sr.No" ko pehle column me add karein
+    const csvHeaders = ["Sr.No", ...headers];
+    csvContent += csvHeaders.map(h => `"${String(h).replace(/"/g, '""')}"`).join(",") + "\r\n";
+    
+    // 2. Loop through filteredData in the exact serial order displayed on the screen
+    filteredData.forEach((row, index) => {
+        const rowValues = [];
+        
+        // Pehla value dynamic Serial Number (Sr.No) hoga
+        rowValues.push(`"${index + 1}"`);
+        
+        // Baaki saare columns ko strictly table renderer ke hisab se extract karein
+        headers.forEach((h, colIndex) => {
+            let cellValue = '';
+            const normH = h.toLowerCase().trim();
+            
+            if (normH.includes('dbt')) {
+                // Map yes/no to "DBT Receiving" and "DBT Not Receiving" matching the table badges
+                const rawRowDbt = String(row["DBT Status"] || row["DBT_Status"] || row[h] || "").trim().toLowerCase();
+                if (rawRowDbt === "yes" || rawRowDbt === "receiving" || rawRowDbt.includes("receiving")) {
+                    cellValue = "DBT Receiving";
+                } else {
+                    cellValue = "DBT Not Receiving"; // blank, pending, or no is Not Receiving
+                }
             } else {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute("href", url);
-                link.setAttribute("download", fileName);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // General column value extraction matching renderTable
+                cellValue = (row._rowValues && row._rowValues[colIndex] !== undefined)
+                    ? row._rowValues[colIndex]
+                    : (row[h] !== undefined ? row[h] : '');
             }
-            showToast('✅ Report downloaded!', 'success');
-        }
-
+            
+            // Clean double quotes to prevent CSV cell break
+            rowValues.push(`"${String(cellValue).replace(/"/g, '""')}"`);
+        });
+        
+        csvContent += rowValues.join(",") + "\r\n";
+    });
+    
+    // 3. Blob and Download Trigger
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const sheetName = document.getElementById('sheetSelect').value;
+    const fileName = `Authorization_List_${new Date().toISOString().slice(0, 10)}.csv`;
+    
+    if (navigator.msSaveBlob) {
+        navigator.msSaveBlob(blob, fileName);
+    } else {
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", fileName);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    showToast('✅ Report downloaded successfully!', 'success');
+}
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -4034,6 +3819,397 @@ function closeDetailsModal() {
     document.getElementById('detailsModalOverlay').style.display = 'none';
 }
 
+let editRowIndex = null; // Globally track the row index being edited in modal
+
+// Function to open the spacious Edit Modal and populate all data dynamically
+function showEditForm(rowIndex) {
+    const editIndex = parseInt(rowIndex);
+    if (isNaN(editIndex) || editIndex < 2) {
+        showToast('❌ Error: Invalid row selection!', 'error');
+        return;
+    }
+
+    const modal = document.getElementById('editRecordModal');
+    if (!modal) return;
+    modal.setAttribute('data-current-row-index', editIndex); 
+
+    const row = allData.find(r => r._rowIndex === editIndex);
+    if (!row) return;
+
+    const fieldsContainer = document.getElementById('editFormFields');
+    fieldsContainer.innerHTML = '';
+    
+    fieldsContainer.innerHTML = `
+        <div class="form-section section-establishment">
+            <div class="form-section-title">
+                Establishment Details
+                <small>Basic establishment information</small>
+            </div>
+            <div class="section-grid" id="edit_establishmentDetailsFields"></div>
+        </div>
+        <div class="form-section section-authorization">
+            <div class="form-section-title">
+                Authorization Letter Details
+                <small>Authorization status, compliance type and officer details</small>
+            </div>
+            <div class="section-grid" id="edit_authorizationDetailsFields"></div>
+        </div>
+        <div class="form-section section-agency" id="edit_agencySection" style="display:none;">
+            <div class="form-section-title">
+                If Compliance type is Employee of Agency:
+                <small>Fill coordinator and agency details only if applicable</small>
+            </div>
+            <div class="section-note">
+                यह section Compliance Type <b>Employee of Agency</b> तभी भरें जब हो.
+            </div>
+            <div class="section-grid" id="edit_agencyDetailsFields"></div>
+        </div>
+    `;
+
+    const occurrenceCounter = {};
+
+    function addEditField(containerId, fieldLabel) {
+        occurrenceCounter[fieldLabel] = (occurrenceCounter[fieldLabel] || 0) + 1;
+        const occurrenceNo = occurrenceCounter[fieldLabel];
+        const colIndex = findHeaderIndexByOccurrence(fieldLabel, occurrenceNo);
+        
+        if (colIndex === -1) return;
+
+        const actualHeader = headers[colIndex];
+        const labelText = actualHeader || fieldLabel;
+        const fieldId = `edit_col_${colIndex}`;
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        let currentValue = (row._rowValues && row._rowValues[colIndex] !== undefined)
+            ? row._rowValues[colIndex]
+            : (row[actualHeader] !== undefined ? row[actualHeader] : '');
+
+        const normH = fieldLabel.toLowerCase().trim();
+        if (normH.includes('mobile') || normH.includes('phone') || normH.includes('number') || normH.includes('mobileno')) {
+            currentValue = String(currentValue).replace(/#N\/A/gi, '').replace(/#NA/gi, '').trim();
+        }
+
+        if (normH.includes('dbt')) {
+            let dbtDisplayVal = "Pending";
+            const lowerVal = String(currentValue).toLowerCase().trim();
+            if (lowerVal === "yes" || lowerVal === "receiving") dbtDisplayVal = "DBT Receiving";
+            else if (lowerVal === "no" || lowerVal === "not receiving") dbtDisplayVal = "DBT Not Receiving";
+
+            container.innerHTML += `
+                <div class="form-group">
+                    <label>${labelText}</label>
+                    <input type="text" id="${fieldId}" class="edit-input" data-col-index="${colIndex}" value="${dbtDisplayVal}" readonly style="background: #e9ecef; color: #495057; cursor: not-allowed; font-weight: 700; border: 1.5px solid #ced4da;" />
+                </div>`;
+            return;
+        }
+
+        if (normalizeHeaderName(fieldLabel) === normalizeHeaderName('Sector')) {
+            const sectorOptions = getUniqueColumnValuesByLabel('Sector');
+            let optionsHtml = `<option value="">Select Sector</option>`;
+            sectorOptions.forEach(sec => {
+                const selected = String(sec).toUpperCase() === String(currentValue).toUpperCase().trim() ? 'selected' : '';
+                optionsHtml += `<option value="${sec}" ${selected}>${sec}</option>`;
+            });
+            container.innerHTML += `
+                <div class="form-group">
+                    <label>${labelText}</label>
+                    <select id="${fieldId}" class="edit-input edit-field" data-col-index="${colIndex}">
+                        ${optionsHtml}
+                    </select>
+                </div>`;
+            return;
+        }
+
+        if (normalizeHeaderName(fieldLabel) === normalizeHeaderName('State')) {
+            const stateOptions = getUniqueColumnValuesByLabel('State');
+            const dataListId = `edit_state_options_${colIndex}`;
+            let optionsHtml = '';
+            stateOptions.forEach(state => {
+                optionsHtml += `<option value="${state}"></option>`;
+            });
+            container.innerHTML += `
+                <div class="form-group">
+                    <label>${labelText}</label>
+                    <input type="text" id="${fieldId}" class="edit-input edit-field" data-col-index="${colIndex}" list="${dataListId}" value="${escapeHtml(currentValue)}" autocomplete="off" />
+                    <datalist id="${dataListId}">${optionsHtml}</datalist>
+                </div>`;
+            return;
+        }
+
+        if (normalizeHeaderName(fieldLabel) === normalizeHeaderName('Date of receiving of Authorization Letter')) {
+            let dateValue = '';
+            if (currentValue) {
+                const d = new Date(currentValue);
+                if (!isNaN(d.getTime())) {
+                    dateValue = d.toISOString().slice(0, 10);
+                } else {
+                    dateValue = String(currentValue).slice(0, 10);
+                }
+            }
+            container.innerHTML += `
+                <div class="form-group">
+                    <label>${labelText}</label>
+                    <input type="date" id="${fieldId}" class="edit-input edit-field" data-col-index="${colIndex}" value="${escapeHtml(dateValue)}" />
+                </div>`;
+            return;
+        }
+
+        if (normalizeHeaderName(fieldLabel) === normalizeHeaderName('Compliance type (Own Employee/ Consultant/ Employee of Agency)')) {
+            const current = String(currentValue || '').trim();
+            container.innerHTML += `
+                <div class="form-group">
+                    <label>${labelText}</label>
+                    <select id="${fieldId}" class="edit-input edit-field" data-col-index="${colIndex}" onchange="toggleEditAgencySectionByCompliance(this.value)">
+                        <option value="">Select Compliance Type</option>
+                        <option value="Self" ${current === 'Self' || current === 'Own Employee' ? 'selected' : ''}>Self</option>
+                        <option value="Employee of Agency" ${current === 'Employee of Agency' ? 'selected' : ''}>Employee of Agency</option>
+                        <option value="Consultant" ${current === 'Consultant' ? 'selected' : ''}>Consultant</option>
+                    </select>
+                </div>`;
+            return;
+        }
+
+        if (normalizeHeaderName(fieldLabel) === normalizeHeaderName('Status of Authorization Letter receipt')) {
+            const current = String(currentValue || '').trim();
+            container.innerHTML += `
+                <div class="form-group">
+                    <label>${labelText}</label>
+                    <select id="${fieldId}" class="edit-input edit-field" data-col-index="${colIndex}">
+                        <option value="">Select Status</option>
+                        <option value="Hard copy Received" ${current === 'Hard copy Received' ? 'selected' : ''}>Hard copy Received</option>
+                        <option value="Soft copy Received" ${current === 'Soft copy Received' ? 'selected' : ''}>Soft copy Received</option>
+                        <option value="Pending" ${current === 'Pending' ? 'selected' : ''}>Pending</option>
+                        <option value="Not Received" ${current === 'Not Received' ? 'selected' : ''}>Not Received</option>
+                    </select>
+                </div>`;
+            return;
+        }
+
+        if (normalizeHeaderName(fieldLabel).includes('email') || normalizeHeaderName(fieldLabel).includes('mail')) {
+            container.innerHTML += `
+                <div class="form-group">
+                    <label>${labelText}</label>
+                    <input type="email" id="${fieldId}" class="edit-input edit-field" data-col-index="${colIndex}" value="${escapeHtml(currentValue)}" placeholder="Enter email address" />
+                </div>`;
+            return;
+        }
+
+        // UPDATED: Restricts input to numbers only, and limits maximum length to 10
+        if (normH.includes('mobile') || normH.includes('phone') || normH.includes('number') || normH.includes('mobileno')) {
+            container.innerHTML += `
+                <div class="form-group">
+                    <label>${labelText}</label>
+                    <input type="tel" id="${fieldId}" class="edit-input edit-field" data-col-index="${colIndex}" value="${escapeHtml(currentValue)}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" placeholder="Enter 10-digit mobile" />
+                </div>`;
+            return;
+        }
+
+        if (normalizeHeaderName(fieldLabel) === normalizeHeaderName('Establishment ID')) {
+            container.innerHTML += `
+                <div class="form-group">
+                    <label>${labelText}</label>
+                    <input type="text" id="${fieldId}" class="edit-input edit-field" data-col-index="${colIndex}" value="${escapeHtml(currentValue)}" oninput="this.value = this.value.toUpperCase(); checkEditEstablishmentIdLive(this, ${rowIndex});" onblur="checkEditEstablishmentIdLive(this, ${rowIndex})" />
+                    <small id="${fieldId}_duplicate_msg" style="font-size:12px; margin-top:4px;"></small>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML += `
+            <div class="form-group">
+                <label>${labelText}</label>
+                <input type="text" id="${fieldId}" class="edit-input edit-field" data-col-index="${colIndex}" value="${escapeHtml(currentValue)}" />
+            </div>`;
+    }
+
+    // --- POPULATE SECTIONS ---
+    [
+        'Establishment ID',
+        'Sector',
+        'Establishment Name',
+        'District',
+        'State',
+        'Email'
+    ].forEach(field => addEditField('edit_establishmentDetailsFields', field));
+
+    [
+        'Status of Authorization Letter receipt',
+        'Date of receiving of Authorization Letter',
+        'Compliance type (Own Employee/ Consultant/ Employee of Agency)',
+        'Compliance Training Officer Name',
+        'Designation',
+        'Mobile Number',
+        'Email ID',
+        'Account Officer Name',
+        'Designation',
+        'Mobile Number',
+        'Email ID',
+        'DBT Status'
+    ].forEach(field => addEditField('edit_authorizationDetailsFields', field));
+
+    [
+        'Name of Cordinator',
+        'Designation',
+        'Mobile No',
+        'Email ID',
+        'Name Of Agency'
+    ].forEach(field => addEditField('edit_agencyDetailsFields', field));
+
+    const complianceColIndex = findHeaderIndexByOccurrence('Compliance type (Own Employee/ Consultant/ Employee of Agency)', 1);
+    if (complianceColIndex !== -1) {
+        const initialCompVal = row._rowValues[complianceColIndex] || '';
+        toggleEditAgencySectionByCompliance(initialCompVal);
+    }
+
+    applyTitleCaseToEditFields();
+    document.getElementById('editRecordModal').style.display = 'flex';
+}
+// Toggle Agency section inside Edit Modal
+function toggleEditAgencySectionByCompliance(value) {
+    const agencySec = document.getElementById('edit_agencySection');
+    if (agencySec) {
+        agencySec.style.display = (value === 'Employee of Agency') ? 'block' : 'none';
+    }
+}
+
+function closeEditModal() {
+    editRowIndex = null;
+    document.getElementById('editRecordModal').style.display = 'none';
+}
+
+// Save Changes from Modal to Cloud Database
+async function saveModalEdit() {
+    const modal = document.getElementById('editRecordModal');
+    if (!modal) return;
+    
+    const targetRowIndex = parseInt(modal.getAttribute('data-current-row-index'));
+    
+    if (isNaN(targetRowIndex) || targetRowIndex < 2) {
+        showToast('❌ Error: Invalid row reference. Please close and try again!', 'error');
+        return;
+    }
+    
+    const rowValues = new Array(headers.length).fill('');
+    
+    document.querySelectorAll('#editFormFields .edit-field').forEach(input => {
+        const colIndex = parseInt(input.getAttribute('data-col-index'));
+        if (!isNaN(colIndex)) {
+            let value = input.value || '';
+            const headerName = headers[colIndex] || '';
+            
+            if (normalizeHeaderName(headerName) === normalizeHeaderName('Establishment ID')) {
+                value = value.toUpperCase();
+            }
+            if (input.getAttribute('type') === 'text' && shouldApplyTitleCase(headerName)) {
+                value = toTitleCaseText(value);
+            }
+            rowValues[colIndex] = value;
+        }
+    });
+
+    const dbtColumnKey = headers.find(h => {
+        const normH = h.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+        return normH === "dbtstatus" || normH === "dbt";
+    }) || "DBT Status";
+    const dbtColIndex = headers.indexOf(dbtColumnKey);
+    const originalRow = allData.find(r => r._rowIndex === targetRowIndex);
+    if (dbtColIndex !== -1 && originalRow) {
+        rowValues[dbtColIndex] = originalRow._rowValues[dbtColIndex] || '';
+    }
+
+    // >>> TRIGGER LIVE MOBILE/EMAIL VALIDATIONS <<<
+    const validation = validateData(rowValues, headers);
+    if (!validation.isValid) {
+        showToast(validation.message, 'error');
+        // Keep the modal open so they can correct it
+        document.getElementById('editRecordModal').style.display = 'flex';
+        return;
+    }
+    // >>> >>> >>> <<< <<< <<<
+
+    showToast('⏳ Saving profile edits...', 'info');
+    closeEditModal();
+
+    try {
+        const sheetName = document.getElementById('sheetSelect').value;
+        const body = new URLSearchParams();
+        body.append('action', 'updateByArray');
+        body.append('sheet', sheetName);
+        body.append('rowIndex', targetRowIndex);
+        body.append('rowValues', JSON.stringify(rowValues));
+        
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: body
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('✅ Profile updated successfully!', 'success');
+            loadData();
+        } else {
+            showToast('❌ Update Failed: ' + result.error, 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('❌ Connection error. Update failed!', 'error');
+    }
+}
+// 🛠️ UNIVERSAL VALIDATION: Validates Mobile (10-digits) and Email (No phone allowed)
+function validateData(rowValues, headers) {
+    for (let i = 0; i < headers.length; i++) {
+        const header = headers[i];
+        const normH = header.toLowerCase().trim();
+        const value = String(rowValues[i] || '').trim();
+
+        // Optional fields if empty can be skipped, but if filled must be validated
+        if (value === '') continue;
+
+        // A. Mobile Number Validation
+        if (normH.includes('mobile') || normH.includes('phone') || normH.includes('number') || normH.includes('mobileno')) {
+            // Strip common formatting like +91, spaces, hyphens, brackets
+            let cleanNum = value.replace(/\s+/g, '').replace(/[-()+]/g, '');
+            if (cleanNum.startsWith('91') && cleanNum.length === 12) {
+                cleanNum = cleanNum.substring(2); // Remove country code
+            } else if (cleanNum.startsWith('0') && cleanNum.length === 11) {
+                cleanNum = cleanNum.substring(1); // Remove leading zero
+            }
+            
+            // Check if exactly 10 digits and starts with 6, 7, 8, 9 (Indian Mobile Standard)
+            const mobileRegex = /^[6-9]\d{9}$/; 
+            if (!mobileRegex.test(cleanNum)) {
+                return {
+                    isValid: false,
+                    message: `❌ Error in "${header}": Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.`
+                };
+            }
+            // Save the cleaned 10-digit number back to the array
+            rowValues[i] = cleanNum;
+        }
+
+        // B. Email Field Validation
+        if (normH.includes('email') || normH.includes('mail')) {
+            // 1. Alert if user enters a 10-digit phone number in email field
+            const hasPhone = /\b\d{10}\b/.test(value.replace(/[-()]/g, '')) || /\b\d{12}\b/.test(value.replace(/[-()]/g, ''));
+            if (hasPhone) {
+                return {
+                    isValid: false,
+                    message: `❌ Error in "${header}": Mobile numbers are NOT allowed in the Email field.`
+                };
+            }
+
+            // 2. Standard Email pattern check
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                return {
+                    isValid: false,
+                    message: `❌ Error in "${header}": Please enter a valid email address (e.g., name@domain.com).`
+                };
+            }
+        }
+    }
+    return { isValid: true };
+}
     </script>
      <!-- DBT STATUS UPDATE MODAL -->
  <div class="modal-overlay" id="dbtStatusModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
@@ -4077,6 +4253,7 @@ function closeDetailsModal() {
              <h3 style="color: #007bff; margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
                  🏢 Establishment Full Profile
              </h3>
+             <span style="font-size: 11px; background: #e3f2fd; color: #007bff; padding: 4px 10px; border-radius: 20px; font-weight: 700;">Double-click Profile</span>
          </div>
          
          <!-- Scrollable Profile Body -->
@@ -4089,6 +4266,28 @@ function closeDetailsModal() {
              <button class="btn btn-danger" onclick="closeDetailsModal()" style="padding: 10px 24px; font-weight: 700; border-radius: 8px;">Close Window</button>
          </div>
          
+     </div>
+ </div>
+  <!-- ✏️ SPACIOUS EDIT RECORD MODAL (Popup Window) -->
+ <div class="modal-overlay" id="editRecordModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+     <div class="modal" style="max-width: 1100px; width: 95%; max-height: 90vh; background: #ffffff; border-radius: 16px; padding: 30px; box-shadow: 0 15px 50px rgba(0,0,0,0.15); text-align: left; overflow: hidden; display: flex; flex-direction: column;">
+         
+         <!-- Modal Header -->
+         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; padding-bottom: 12px; margin-bottom: 20px; flex-shrink: 0;">
+             <h3 style="color: #007bff; margin: 0; font-size: 22px; font-weight: 800;">✏️ Edit Establishment Profile</h3>
+             <span style="font-size: 11px; background: #e3f2fd; color: #007bff; padding: 4px 12px; border-radius: 20px; font-weight: 700;">Spacious Edit Mode</span>
+         </div>
+
+         <!-- Scrollable Form Fields Grid -->
+         <div id="editFormFields" class="grouped-form" style="overflow-y: auto; flex-grow: 1; padding-right: 10px; margin-bottom: 20px;">
+             <!-- Sections (Establishment, Authorization, Agency) will load dynamically here -->
+         </div>
+
+         <!-- Modal Footer Actions -->
+         <div class="form-actions" style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #dee2e6; padding-top: 15px; margin-top: 0; flex-shrink: 0;">
+             <button class="btn btn-success" onclick="saveModalEdit()" style="background: #28a745; padding: 12px 24px; font-weight: 700;">💾 Save Changes</button>
+             <button class="btn btn-danger" onclick="closeEditModal()" style="padding: 12px 24px; font-weight: 700;">Cancel</button>
+         </div>
      </div>
  </div>
 </body>
